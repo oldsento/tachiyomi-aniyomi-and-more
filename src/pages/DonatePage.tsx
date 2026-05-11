@@ -90,7 +90,13 @@ function Card({
 }
 
 /* ───── Donator Card ───── */
-function DonatorCard({ donator, index, showDonationAmounts }: { donator: Donator; index: number; showDonationAmounts: boolean }) {
+interface DonatorCardProps {
+  donator: Donator;
+  index: number;
+  showDonationAmounts: boolean;
+}
+
+const DonatorCard: React.FC<DonatorCardProps> = ({ donator, index, showDonationAmounts }) => {
   const initials = donator.name
     .split(' ')
     .map((w) => w[0])
@@ -134,7 +140,7 @@ function DonatorCard({ donator, index, showDonationAmounts }: { donator: Donator
       </div>
     </motion.div>
   );
-}
+};
 
 /* ═══════════════════════════════════════════════
    DONATE PAGE
