@@ -16,8 +16,13 @@ interface DonationRow {
 interface GoalSettings {
   title: string; description: string; targetAmount: number; currentAmount: number; currency: string;
 }
+interface PaymentMethodDetails {
+  number?: string; email?: string; address?: string;
+  accountName?: string; network?: string; instructions?: string; qrCodeUrl?: string;
+}
 interface PaymentMethodItem {
   id: string; label: string; description: string; url: string; enabled: boolean; iconHint: string;
+  type?: 'link' | 'details'; details?: PaymentMethodDetails;
 }
 interface TransparencyItem { label: string; value: string; }
 interface DisplaySettings { showDonationAmounts: boolean; transparencyLastUpdated: string; }
@@ -49,7 +54,7 @@ export function AdminDonationsPage() {
   // method editor
   const [methodModalOpen, setMethodModalOpen] = useState(false);
   const [editMethodIdx, setEditMethodIdx] = useState<number | null>(null);
-  const [methodForm, setMethodForm] = useState<PaymentMethodItem>({ id: '', label: '', description: '', url: '#', enabled: true, iconHint: 'paypal' });
+  const [methodForm, setMethodForm] = useState<PaymentMethodItem>({ id: '', label: '', description: '', url: '#', enabled: true, iconHint: 'paypal', type: 'details', details: {} });
 
   // transparency editor
   const [transModalOpen, setTransModalOpen] = useState(false);
@@ -120,8 +125,8 @@ export function AdminDonationsPage() {
   }
 
   /* ─── method helpers ─── */
-  function openMethodCreate() { setMethodForm({ id: '', label: '', description: '', url: '#', enabled: true, iconHint: 'paypal' }); setEditMethodIdx(null); setMethodModalOpen(true); }
-  function openMethodEdit(idx: number) { setMethodForm({ ...methods[idx] }); setEditMethodIdx(idx); setMethodModalOpen(true); }
+  function openMethodCreate() { setMethodForm({ id: '', label: '', description: '', url: '#', enabled: true, iconHint: 'paypal', type: 'details', details: {} }); setEditMethodIdx(null); setMethodModalOpen(true); }
+  function openMethodEdit(idx: number) { setMethodForm({ ...methods[idx], details: methods[idx].details || {} }); setEditMethodIdx(idx); setMethodModalOpen(true); }
   function saveMethod() {
     const updated = [...methods];
     if (editMethodIdx !== null) { updated[editMethodIdx] = methodForm; } else { updated.push({ ...methodForm, id: methodForm.id || methodForm.label.toLowerCase().replace(/\s+/g, '') }); }
@@ -279,7 +284,9 @@ export function AdminDonationsPage() {
                       <span className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>{m.label}</span>
                       <StatusBadge active={m.enabled} />
                     </div>
-                    <p className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>{m.url === '#' ? 'No URL set' : m.url}</p>
+                    <p className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>
+                      {m.type === 'link' ? (m.url === '#' ? 'No URL set' : m.url) : `Details: ${[m.details?.number, m.details?.email, m.details?.address].filter(Boolean).join(', ') || 'Not configured'}`}
+                    </p>
                   </div>
                   <button onClick={() => toggleMethod(i)} className="px-2.5 py-1 text-xs rounded-lg border font-medium" style={{ borderColor: 'var(--divider)', color: 'var(--text-secondary)' }}>{m.enabled ? 'Disable' : 'Enable'}</button>
                   <button onClick={() => openMethodEdit(i)} className="p-1.5 rounded-lg" style={{ color: 'var(--text-secondary)' }}><Pencil className="w-4 h-4" /></button>
@@ -288,14 +295,77 @@ export function AdminDonationsPage() {
               ))}
             </div>
           )}
-          <AdminModal open={methodModalOpen} onClose={() => setMethodModalOpen(false)} title={editMethodIdx !== null ? 'Edit Method' : 'Add Method'}>
+          <AdminModal open={methodModalOpen} onClose={() => setMethodModalOpen(false)} title={editMethodIdx !== null ? 'Edit Method' : 'Add Method'} maxWidth="560px">
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <AdminFormField label="Label" required><AdminInput value={methodForm.label} onChange={e => setMethodForm(f => ({ ...f, label: e.target.value }))} /></AdminFormField>
-                <AdminFormField label="Icon Hint"><AdminInput value={methodForm.iconHint} onChange={e => setMethodForm(f => ({ ...f, iconHint: e.target.value }))} placeholder="paypal, crypto, kofi…" /></AdminFormField>
+                <AdminFormField label="Icon Hint"><AdminInput value={methodForm.iconHint} onChange={e => setMethodForm(f => ({ ...f, iconHint: e.target.value }))} placeholder="paypal, bkash, bitcoin…" /></AdminFormField>
               </div>
               <AdminFormField label="Description"><AdminInput value={methodForm.description} onChange={e => setMethodForm(f => ({ ...f, description: e.target.value }))} /></AdminFormField>
-              <AdminFormField label="URL"><AdminInput value={methodForm.url} onChange={e => setMethodForm(f => ({ ...f, url: e.target.value }))} placeholder="https://..." /></AdminFormField>
+
+              {/* Type selector */}
+              <AdminFormField label="Click Action">
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setMethodForm(f => ({ ...f, type: 'link' }))}
+                    className={`px-4 py-2 text-sm rounded-lg border font-medium transition-colors ${
+                      methodForm.type === 'link'
+                        ? 'bg-[var(--brand)]/10 border-[var(--brand)] text-[var(--brand)]'
+                        : 'border-[var(--divider)] text-[var(--text-secondary)]'
+                    }`}
+                  >
+                    🔗 Open URL
+                  </button>
+                  <button
+                    onClick={() => setMethodForm(f => ({ ...f, type: 'details' }))}
+                    className={`px-4 py-2 text-sm rounded-lg border font-medium transition-colors ${
+                      methodForm.type === 'details'
+                        ? 'bg-[var(--brand)]/10 border-[var(--brand)] text-[var(--brand)]'
+                        : 'border-[var(--divider)] text-[var(--text-secondary)]'
+                    }`}
+                  >
+                    📋 Show Details
+                  </button>
+                </div>
+              </AdminFormField>
+
+              {/* URL field (always shown, used for both types) */}
+              <AdminFormField label={methodForm.type === 'link' ? 'URL (opens in new tab)' : 'URL (optional, button in popup)'}>
+                <AdminInput value={methodForm.url} onChange={e => setMethodForm(f => ({ ...f, url: e.target.value }))} placeholder="https://..." />
+              </AdminFormField>
+
+              {/* Detail fields (only when type is 'details') */}
+              {methodForm.type === 'details' && (
+                <div className="rounded-xl border p-4 space-y-3" style={{ borderColor: 'var(--divider)', background: 'var(--bg-page)' }}>
+                  <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>Payment Details (shown in popup)</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <AdminFormField label="Phone / Number">
+                      <AdminInput value={methodForm.details?.number || ''} onChange={e => setMethodForm(f => ({ ...f, details: { ...f.details, number: e.target.value } }))} placeholder="01XXXXXXXXX" />
+                    </AdminFormField>
+                    <AdminFormField label="Email">
+                      <AdminInput value={methodForm.details?.email || ''} onChange={e => setMethodForm(f => ({ ...f, details: { ...f.details, email: e.target.value } }))} placeholder="user@example.com" />
+                    </AdminFormField>
+                  </div>
+                  <AdminFormField label="Wallet / UPI / Account Address">
+                    <AdminInput value={methodForm.details?.address || ''} onChange={e => setMethodForm(f => ({ ...f, details: { ...f.details, address: e.target.value } }))} placeholder="0x... / user@upi" />
+                  </AdminFormField>
+                  <div className="grid grid-cols-2 gap-3">
+                    <AdminFormField label="Account Name">
+                      <AdminInput value={methodForm.details?.accountName || ''} onChange={e => setMethodForm(f => ({ ...f, details: { ...f.details, accountName: e.target.value } }))} placeholder="John Doe" />
+                    </AdminFormField>
+                    <AdminFormField label="Network">
+                      <AdminInput value={methodForm.details?.network || ''} onChange={e => setMethodForm(f => ({ ...f, details: { ...f.details, network: e.target.value } }))} placeholder="ERC-20, TRC-20, etc." />
+                    </AdminFormField>
+                  </div>
+                  <AdminFormField label="Instructions">
+                    <AdminTextarea value={methodForm.details?.instructions || ''} onChange={e => setMethodForm(f => ({ ...f, details: { ...f.details, instructions: e.target.value } }))} placeholder="Instructions shown to the donor…" rows={2} />
+                  </AdminFormField>
+                  <AdminFormField label="QR Code Image URL">
+                    <AdminInput value={methodForm.details?.qrCodeUrl || ''} onChange={e => setMethodForm(f => ({ ...f, details: { ...f.details, qrCodeUrl: e.target.value } }))} placeholder="https://...qr.png" />
+                  </AdminFormField>
+                </div>
+              )}
+
               <label className="flex items-center gap-2 text-sm cursor-pointer" style={{ color: 'var(--text-primary)' }}>
                 <input type="checkbox" checked={methodForm.enabled} onChange={e => setMethodForm(f => ({ ...f, enabled: e.target.checked }))} className="rounded" /> Enabled
               </label>

@@ -19,12 +19,42 @@ import {
   MessageCircle,
   ChevronDown,
   ChevronUp,
+  X,
+  Copy,
+  Check,
+  Mail,
+  Phone,
+  Hash,
+  Info,
 } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { useState } from 'react';
 import { useDonations } from '../hooks/useDonations';
 import type { Donator } from '../hooks/useDonations';
 import { type PaymentMethod } from '@/integrations/supabase/types';
+
+/* ───── brand colors per payment provider ───── */
+const BRAND_COLORS: Record<string, { bg: string; accent: string; text: string }> = {
+  bkash:      { bg: '#E2136E', accent: '#C70D5A', text: '#fff' },
+  nagad:      { bg: '#F6921E', accent: '#E07D0D', text: '#fff' },
+  rocket:     { bg: '#8B2F8B', accent: '#722778', text: '#fff' },
+  upay:       { bg: '#00A651', accent: '#008C44', text: '#fff' },
+  upi:        { bg: '#5F259F', accent: '#4A1D7D', text: '#fff' },
+  paytm:      { bg: '#00BAF2', accent: '#0098C8', text: '#fff' },
+  gcash:      { bg: '#007DFE', accent: '#0065CC', text: '#fff' },
+  maya:       { bg: '#2BC44D', accent: '#22A33E', text: '#fff' },
+  grabpay:    { bg: '#00B14F', accent: '#008D3F', text: '#fff' },
+  dana:       { bg: '#118EEA', accent: '#0D73BF', text: '#fff' },
+  gopay:      { bg: '#00AED6', accent: '#008EB0', text: '#fff' },
+  paypal:     { bg: '#003087', accent: '#002266', text: '#fff' },
+  bitcoin:    { bg: '#F7931A', accent: '#D97F15', text: '#fff' },
+  ethereum:   { bg: '#627EEA', accent: '#4A65CC', text: '#fff' },
+  usdt:       { bg: '#26A17B', accent: '#1E8264', text: '#fff' },
+  wise:       { bg: '#9FE870', accent: '#7CC755', text: '#1A1A2E' },
+  bank:       { bg: '#1A1A2E', accent: '#111122', text: '#fff' },
+  contact:    { bg: '#6C5CE7', accent: '#5A4BD1', text: '#fff' },
+  razorpay:   { bg: '#0B6CBB', accent: '#085699', text: '#fff' },
+};
 
 /* ───── helper: pick icon by hint ───── */
 function PaymentIcon({ hint }: { hint: PaymentMethod['iconHint'] }) {
@@ -50,8 +80,6 @@ function PaymentIcon({ hint }: { hint: PaymentMethod['iconHint'] }) {
       return <DollarSign className={cls} />;
   }
 }
-
-/* ───── helper: transparency icon ───── */
 function TransparencyIcon({ label }: { label: string }) {
   const cls = 'w-4 h-4 text-[var(--brand)] flex-shrink-0';
   if (label.toLowerCase().includes('hosting')) return <Server className={cls} />;
@@ -142,6 +170,151 @@ const DonatorCard: React.FC<DonatorCardProps> = ({ donator, index, showDonationA
   );
 };
 
+/* ───── Copyable Field ───── */
+function CopyableField({ label, value, icon: Icon }: { label: string; value: string; icon: React.ElementType }) {
+  const [copied, setCopied] = useState(false);
+  if (!value) return null;
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(value);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="flex items-center gap-3 p-3 rounded-xl border border-[var(--divider)] bg-[var(--bg-page)]">
+      <Icon className="w-4 h-4 text-[var(--text-secondary)] flex-shrink-0" />
+      <div className="flex-1 min-w-0">
+        <span className="block text-[10px] uppercase tracking-wider text-[var(--text-secondary)] mb-0.5">{label}</span>
+        <span className="block text-sm font-mono text-[var(--text-primary)] break-all">{value}</span>
+      </div>
+      <button
+        onClick={handleCopy}
+        className="p-2 rounded-lg hover:bg-[var(--chip-bg)] transition-colors flex-shrink-0"
+        title="Copy"
+      >
+        {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4 text-[var(--text-secondary)]" />}
+      </button>
+    </div>
+  );
+}
+
+/* ───── Payment Detail Modal ───── */
+function PaymentDetailModal({ method, onClose }: { method: PaymentMethod | null; onClose: () => void }) {
+  const brand = method ? BRAND_COLORS[method.iconHint] : null;
+  const details = method?.details;
+
+  return (
+    <AnimatePresence>
+      {method && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          onClick={onClose}
+        >
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+
+          {/* Modal */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.92, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.92, y: 20 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-md rounded-2xl overflow-hidden border border-[var(--divider)]"
+            style={{ background: 'var(--bg-surface)' }}
+          >
+            {/* Branded Header */}
+            <div
+              className="relative px-6 py-5 flex items-center gap-4"
+              style={{
+                background: brand
+                  ? `linear-gradient(135deg, ${brand.bg}, ${brand.accent})`
+                  : 'linear-gradient(135deg, var(--brand), var(--chart-3))',
+              }}
+            >
+              <div
+                className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ background: 'rgba(255,255,255,0.2)' }}
+              >
+                <PaymentIcon hint={method.iconHint} />
+              </div>
+              <div style={{ color: brand?.text || '#fff' }}>
+                <h3 className="text-lg font-bold font-['Poppins',sans-serif]">{method.label}</h3>
+                <p className="text-sm opacity-80">{method.description}</p>
+              </div>
+              <button
+                onClick={onClose}
+                className="absolute top-3 right-3 p-1.5 rounded-lg hover:bg-white/20 transition-colors"
+                style={{ color: brand?.text || '#fff' }}
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 space-y-3">
+              {details?.instructions && (
+                <p className="text-sm text-[var(--text-secondary)] mb-4 leading-relaxed">
+                  {details.instructions}
+                </p>
+              )}
+
+              {details?.number && <CopyableField label="Number" value={details.number} icon={Phone} />}
+              {details?.email && <CopyableField label="Email" value={details.email} icon={Mail} />}
+              {details?.address && <CopyableField label="Address" value={details.address} icon={Hash} />}
+              {details?.accountName && (
+                <div className="flex items-center gap-3 p-3 rounded-xl border border-[var(--divider)] bg-[var(--bg-page)]">
+                  <Users className="w-4 h-4 text-[var(--text-secondary)] flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <span className="block text-[10px] uppercase tracking-wider text-[var(--text-secondary)] mb-0.5">Account Name</span>
+                    <span className="block text-sm text-[var(--text-primary)]">{details.accountName}</span>
+                  </div>
+                </div>
+              )}
+              {details?.network && (
+                <div className="flex items-center gap-3 p-3 rounded-xl border border-[var(--divider)] bg-[var(--bg-page)]">
+                  <Globe2 className="w-4 h-4 text-[var(--text-secondary)] flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <span className="block text-[10px] uppercase tracking-wider text-[var(--text-secondary)] mb-0.5">Network</span>
+                    <span className="block text-sm text-[var(--text-primary)]">{details.network}</span>
+                  </div>
+                </div>
+              )}
+
+              {details?.qrCodeUrl && (
+                <div className="flex justify-center pt-2">
+                  <img src={details.qrCodeUrl} alt="QR Code" className="w-40 h-40 rounded-xl border border-[var(--divider)]" />
+                </div>
+              )}
+
+              {/* External link button if URL is set */}
+              {method.url && method.url !== '#' && (
+                <a
+                  href={method.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 w-full mt-4 py-3 rounded-xl font-semibold text-sm transition-all hover:opacity-90"
+                  style={{
+                    background: brand ? brand.bg : 'var(--brand)',
+                    color: brand?.text || '#fff',
+                  }}
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  Open {method.label}
+                </a>
+              )}
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
 /* ═══════════════════════════════════════════════
    DONATE PAGE
    ═══════════════════════════════════════════════ */
@@ -156,6 +329,7 @@ export function DonatePage() {
     loading,
   } = useDonations();
   const [showAllDonators, setShowAllDonators] = useState(false);
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(null);
 
   const progressPercent = donationGoal.targetAmount > 0
     ? Math.min((donationGoal.currentAmount / donationGoal.targetAmount) * 100, 100)
@@ -279,36 +453,55 @@ export function DonatePage() {
           </p>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            {enabledMethods.map((method, i) => (
-              <motion.a
-                key={method.id}
-                href={method.url}
-                target={method.url !== '#' ? '_blank' : undefined}
-                rel="noopener noreferrer"
-                initial={{ opacity: 0, scale: 0.95 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.3, delay: i * 0.06 }}
-                whileHover={{ y: -3, scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                className="group relative flex flex-col items-center gap-2 p-4 rounded-xl border border-[var(--divider)] bg-[var(--bg-page)] hover:border-[var(--brand)] hover:shadow-lg transition-all text-center"
-              >
-                {/* Gradient hover glow */}
-                <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-[var(--brand)] to-[var(--chart-3)] opacity-0 group-hover:opacity-[0.06] transition-opacity" />
-                <div className="relative z-10 w-10 h-10 flex items-center justify-center rounded-lg bg-[var(--chip-bg)] text-[var(--brand)] group-hover:scale-110 transition-transform">
-                  <PaymentIcon hint={method.iconHint} />
-                </div>
-                <div className="relative z-10">
-                  <span className="block text-[var(--text-primary)] text-sm font-semibold font-['Poppins',sans-serif]">
-                    {method.label}
-                  </span>
-                  <span className="block text-[var(--text-secondary)] text-[10px] mt-0.5 leading-tight">
-                    {method.description}
-                  </span>
-                </div>
-                <ExternalLink className="absolute top-2 right-2 w-3 h-3 text-[var(--text-secondary)] opacity-0 group-hover:opacity-60 transition-opacity" />
-              </motion.a>
-            ))}
+            {enabledMethods.map((method, i) => {
+              const isLink = method.type === 'link' && method.url && method.url !== '#';
+              const brandColor = BRAND_COLORS[method.iconHint];
+
+              return (
+                <motion.button
+                  key={method.id}
+                  onClick={() => {
+                    if (isLink) {
+                      window.open(method.url, '_blank', 'noopener,noreferrer');
+                    } else {
+                      setSelectedMethod(method);
+                    }
+                  }}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.3, delay: i * 0.06 }}
+                  whileHover={{ y: -3, scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  className="group relative flex flex-col items-center gap-2 p-4 rounded-xl border border-[var(--divider)] bg-[var(--bg-page)] hover:shadow-lg transition-all text-center cursor-pointer"
+                  style={{ borderColor: brandColor ? `${brandColor.bg}20` : undefined }}
+                >
+                  {/* Gradient hover glow */}
+                  <div
+                    className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-[0.08] transition-opacity"
+                    style={{ background: brandColor ? `linear-gradient(135deg, ${brandColor.bg}, ${brandColor.accent})` : 'var(--brand)' }}
+                  />
+                  <div
+                    className="relative z-10 w-10 h-10 flex items-center justify-center rounded-lg group-hover:scale-110 transition-transform"
+                    style={{ background: brandColor ? `${brandColor.bg}15` : 'var(--chip-bg)', color: brandColor?.bg || 'var(--brand)' }}
+                  >
+                    <PaymentIcon hint={method.iconHint} />
+                  </div>
+                  <div className="relative z-10">
+                    <span className="block text-[var(--text-primary)] text-sm font-semibold font-['Poppins',sans-serif]">
+                      {method.label}
+                    </span>
+                    <span className="block text-[var(--text-secondary)] text-[10px] mt-0.5 leading-tight">
+                      {method.description}
+                    </span>
+                  </div>
+                  {isLink
+                    ? <ExternalLink className="absolute top-2 right-2 w-3 h-3 text-[var(--text-secondary)] opacity-0 group-hover:opacity-60 transition-opacity" />
+                    : <Info className="absolute top-2 right-2 w-3 h-3 text-[var(--text-secondary)] opacity-0 group-hover:opacity-60 transition-opacity" />
+                  }
+                </motion.button>
+              );
+            })}
           </div>
 
           <p className="text-[var(--text-secondary)] text-xs mt-5 flex items-center gap-1.5">
@@ -453,6 +646,8 @@ export function DonatePage() {
           </div>
         </Card>
       </motion.section>
+      {/* ── PAYMENT DETAIL MODAL ── */}
+      <PaymentDetailModal method={selectedMethod} onClose={() => setSelectedMethod(null)} />
     </div>
   );
 }

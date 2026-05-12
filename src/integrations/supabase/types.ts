@@ -949,6 +949,16 @@ export interface DonationGoal {
   currency: string;
 }
 
+export interface PaymentMethodDetails {
+  number?: string;
+  email?: string;
+  address?: string;
+  accountName?: string;
+  network?: string;
+  instructions?: string;
+  qrCodeUrl?: string;
+}
+
 export interface PaymentMethod {
   id: string;
   label: string;
@@ -956,6 +966,8 @@ export interface PaymentMethod {
   url: string;
   enabled: boolean;
   iconHint: string;
+  type?: 'link' | 'details';
+  details?: PaymentMethodDetails;
 }
 
 export interface TransparencyItem {
