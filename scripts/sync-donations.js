@@ -13,18 +13,16 @@ dotenv.config({ path: resolve(__dirname, '../.env') });
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-  console.error('Missing Supabase credentials in .env');
-  process.exit(1);
-}
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-
 const DEFAULT_GOAL = { title: '', description: '', targetAmount: 0, currentAmount: 0, currency: 'USD' };
 
 async function sync() {
   console.log('Fetching donation data from Supabase...');
   try {
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error('Missing Supabase credentials (VITE_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in environment).');
+    }
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     let goal = DEFAULT_GOAL;
     let methods = [];
     let transparency = [];
