@@ -495,7 +495,7 @@ export function ExtensionDetailPage({ extensionId, onNavigate }: ExtensionDetail
       </motion.div>
 
       {/* Overview Section - Conditional */}
-      {extension.overview && (
+      {extension.overview?.trim() && (
         <div className="mb-6 sm:mb-8">
           <h2
             className="text-[var(--text-primary)] font-['Poppins',sans-serif] mb-4"

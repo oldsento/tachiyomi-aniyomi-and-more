@@ -35,7 +35,7 @@ export function useExtensions(): { extensions: ExtensionData[]; loading: boolean
             })(),
             supportedApps: (ext.compatible_with || []).map((app: string) => app.toLowerCase()),
             lastUpdated: ext.last_updated || ext.updated_at,
-            overview: ext.info,
+            overview: ext.description || undefined,
             github: ext.repo_url,
             website: ext.website_url,
             keywords: [],

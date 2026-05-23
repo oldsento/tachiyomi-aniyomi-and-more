@@ -53,7 +53,7 @@ function toExtensionData(row: Tables<'extensions'>): ExtensionData {
     manualUrl: meta.manualUrl || '',
     supportedApps: (row.compatible_with || []) as any,
     lastUpdated: row.updated_at,
-    overview: row.description || meta.overview || undefined,
+    overview: row.description || undefined,
     github: row.repo_url || undefined,
     website: row.source_url || undefined,
     keywords: meta.keywords || undefined,

@@ -43,7 +43,7 @@ export function useExtension(extensionId: string): { extension: ExtensionData | 
                         manualUrl: data.manual_url || '',
                         supportedApps: (data.compatible_with || []).map((app: string) => app.toLowerCase()),
                         lastUpdated: data.updated_at || data.created_at,
-                        overview: data.description || data.info, // Map description to overview
+                        overview: data.description || undefined,
                         github: data.repo_url,
                         website: data.website_url,
                         keywords: data.tags || [],
