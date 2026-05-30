@@ -81,8 +81,9 @@ export function AdminExtensionsPage() {
                 {filtered.map((ext, i) => (
                   <tr
                     key={ext.id}
-                    className="border-t transition-colors"
+                    className="border-t transition-colors cursor-pointer"
                     style={{ borderColor: "var(--divider)" }}
+                    onClick={() => navigate(`/admin/extensions/${ext.id}/edit`)}
                     onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-elev-1)")}
                     onMouseLeave={(e) => (e.currentTarget.style.background = "")}
                   >
@@ -101,14 +102,20 @@ export function AdminExtensionsPage() {
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
                         <button
-                          onClick={() => navigate(`/admin/extensions/${ext.id}/edit`)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/admin/extensions/${ext.id}/edit`);
+                          }}
                           className="p-2 rounded-lg transition-colors"
                           style={{ color: "var(--text-secondary)" }}
                         >
                           <Pencil className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => setDeleteTarget({ id: ext.id, name: ext.name })}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteTarget({ id: ext.id, name: ext.name });
+                          }}
                           className="p-2 rounded-lg transition-colors"
                           style={{ color: "var(--text-secondary)" }}
                         >

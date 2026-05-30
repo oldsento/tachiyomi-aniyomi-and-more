@@ -49,8 +49,11 @@ export function AdminFAQsPage() {
       ) : (
         <div className="space-y-3">
           {filtered.map((faq, i) => (
-            <div key={faq.id} className="rounded-xl border p-4 flex items-start gap-4 transition-colors"
+            <div key={faq.id} className="rounded-xl border p-4 flex items-start gap-4 transition-colors cursor-pointer"
               style={{ background: 'var(--bg-surface)', borderColor: 'var(--divider)' }}
+              onClick={() => navigate(`/admin/faqs/${faq.id}/edit`)}
+              onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-elev-1)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'var(--bg-surface)')}
             >
               <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-xs font-bold"
                 style={{ background: 'var(--chip-bg)', color: 'var(--brand)' }}
@@ -62,8 +65,14 @@ export function AdminFAQsPage() {
                 <p className="text-xs line-clamp-2" style={{ color: 'var(--text-secondary)' }}>{faq.answer}</p>
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
-                <button onClick={() => navigate(`/admin/faqs/${faq.id}/edit`)} className="p-2 rounded-lg transition-colors" style={{ color: 'var(--text-secondary)' }}><Pencil className="w-4 h-4" /></button>
-                <button onClick={() => setDeleteTarget({ id: faq.id, name: faq.question })} className="p-2 rounded-lg transition-colors" style={{ color: 'var(--text-secondary)' }}><Trash2 className="w-4 h-4" /></button>
+                <button onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/admin/faqs/${faq.id}/edit`);
+                }} className="p-2 rounded-lg transition-colors" style={{ color: 'var(--text-secondary)' }}><Pencil className="w-4 h-4" /></button>
+                <button onClick={(e) => {
+                  e.stopPropagation();
+                  setDeleteTarget({ id: faq.id, name: faq.question });
+                }} className="p-2 rounded-lg transition-colors" style={{ color: 'var(--text-secondary)' }}><Trash2 className="w-4 h-4" /></button>
               </div>
             </div>
           ))}

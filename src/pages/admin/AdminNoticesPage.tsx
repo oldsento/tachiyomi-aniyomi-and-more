@@ -87,8 +87,11 @@ export function AdminNoticesPage() {
       ) : (
         <div className="space-y-3">
           {filtered.map(notice => (
-            <div key={notice.id} className="rounded-xl border p-4 flex items-start gap-4"
+            <div key={notice.id} className="rounded-xl border p-4 flex items-start gap-4 transition-colors cursor-pointer"
               style={{ background: 'var(--bg-surface)', borderColor: 'var(--divider)' }}
+              onClick={() => openEdit(notice)}
+              onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-elev-1)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'var(--bg-surface)')}
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -101,14 +104,23 @@ export function AdminNoticesPage() {
                 <p className="text-xs line-clamp-2" style={{ color: 'var(--text-secondary)' }}>{notice.message}</p>
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
-                <button onClick={() => toggleActive(notice.id, notice.active)}
+                <button onClick={(e) => {
+                  e.stopPropagation();
+                  toggleActive(notice.id, notice.active);
+                }}
                   className="px-2.5 py-1.5 text-xs rounded-lg border font-medium transition-colors"
                   style={{ borderColor: 'var(--divider)', color: 'var(--text-secondary)' }}
                 >
                   {notice.active ? 'Deactivate' : 'Activate'}
                 </button>
-                <button onClick={() => openEdit(notice)} className="p-2 rounded-lg transition-colors" style={{ color: 'var(--text-secondary)' }}><Pencil className="w-4 h-4" /></button>
-                <button onClick={() => setDeleteTarget({ id: notice.id, name: notice.title })} className="p-2 rounded-lg transition-colors" style={{ color: 'var(--text-secondary)' }}><Trash2 className="w-4 h-4" /></button>
+                <button onClick={(e) => {
+                  e.stopPropagation();
+                  openEdit(notice);
+                }} className="p-2 rounded-lg transition-colors" style={{ color: 'var(--text-secondary)' }}><Pencil className="w-4 h-4" /></button>
+                <button onClick={(e) => {
+                  e.stopPropagation();
+                  setDeleteTarget({ id: notice.id, name: notice.title });
+                }} className="p-2 rounded-lg transition-colors" style={{ color: 'var(--text-secondary)' }}><Trash2 className="w-4 h-4" /></button>
               </div>
             </div>
           ))}

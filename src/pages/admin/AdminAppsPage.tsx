@@ -82,8 +82,9 @@ export function AdminAppsPage() {
                 {filtered.map((app, i) => (
                   <tr
                     key={app.id}
-                    className="border-t transition-colors"
+                    className="border-t transition-colors cursor-pointer"
                     style={{ borderColor: "var(--divider)" }}
+                    onClick={() => navigate(`/admin/apps/${app.id}/edit`)}
                     onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-elev-1)")}
                     onMouseLeave={(e) => (e.currentTarget.style.background = "")}
                   >
@@ -105,7 +106,10 @@ export function AdminAppsPage() {
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
                         <button
-                          onClick={() => navigate(`/admin/apps/${app.id}/edit`)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/admin/apps/${app.id}/edit`);
+                          }}
                           className="p-2 rounded-lg transition-colors"
                           style={{ color: "var(--text-secondary)" }}
                           onMouseEnter={(e) => (e.currentTarget.style.color = "var(--brand)")}
@@ -114,7 +118,10 @@ export function AdminAppsPage() {
                           <Pencil className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => setDeleteTarget({ id: app.id, name: app.name })}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteTarget({ id: app.id, name: app.name });
+                          }}
                           className="p-2 rounded-lg transition-colors"
                           style={{ color: "var(--text-secondary)" }}
                           onMouseEnter={(e) => (e.currentTarget.style.color = "var(--destructive)")}

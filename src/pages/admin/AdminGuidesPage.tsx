@@ -34,34 +34,7 @@ export function AdminGuidesPage() {
     navigate(`/admin/guides/${g.id}/edit`);
   }
 
-  async function handleSave() {
-    setSaving(true);
-    const payload = {
-      title: form.title, description: form.description || null, content: form.content || null,
-      author: form.author || null, category: form.category || null,
-      slug: form.slug || form.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
-      status: form.status, tags: form.tags.length ? form.tags : null,
-    };
 
-    if (editingId) {
-      await supabase.from('guides').update(payload).eq('id', editingId);
-
-      // Log update action
-      await logAction('update', 'guide', editingId, form.title).catch(err => {
-        console.error('Failed to log update action:', err);
-      });
-    } else {
-      const { data } = await supabase.from('guides').insert(payload).select().single();
-
-      // Log create action
-      if (data) {
-        await logAction('create', 'guide', data.id, form.title).catch(err => {
-          console.error('Failed to log create action:', err);
-        });
-      }
-    }
-    setSaving(false); setModalOpen(false); invalidateCache();
-  }
 
   async function handleDelete() {
     if (!deleteTarget) return;
@@ -104,7 +77,8 @@ export function AdminGuidesPage() {
               </thead>
               <tbody>
                 {filtered.map((g, i) => (
-                  <tr key={g.id} className="border-t transition-colors" style={{ borderColor: 'var(--divider)' }}
+                  <tr key={g.id} className="border-t transition-colors cursor-pointer" style={{ borderColor: 'var(--divider)' }}
+                    onClick={() => openEdit(g)}
                     onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-elev-1)')}
                     onMouseLeave={e => (e.currentTarget.style.background = '')}
                   >
@@ -114,8 +88,14 @@ export function AdminGuidesPage() {
                     <td className="px-4 py-3 hidden md:table-cell"><StatusBadge status={g.status} /></td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <button onClick={() => openEdit(g)} className="p-2 rounded-lg transition-colors" style={{ color: 'var(--text-secondary)' }}><Pencil className="w-4 h-4" /></button>
-                        <button onClick={() => setDeleteTarget({ id: g.id, name: g.title })} className="p-2 rounded-lg transition-colors" style={{ color: 'var(--text-secondary)' }}><Trash2 className="w-4 h-4" /></button>
+                        <button onClick={(e) => {
+                          e.stopPropagation();
+                          openEdit(g);
+                        }} className="p-2 rounded-lg transition-colors" style={{ color: 'var(--text-secondary)' }}><Pencil className="w-4 h-4" /></button>
+                        <button onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteTarget({ id: g.id, name: g.title });
+                        }} className="p-2 rounded-lg transition-colors" style={{ color: 'var(--text-secondary)' }}><Trash2 className="w-4 h-4" /></button>
                       </div>
                     </td>
                   </tr>
