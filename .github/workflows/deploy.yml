@@ -10,7 +10,7 @@ jobs:
       - run: corepack enable
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
       - run: pnpm install
       - run: pnpm build --preset github_pages
       - uses: actions/upload-pages-artifact@v3
