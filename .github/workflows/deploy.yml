@@ -1,4 +1,7 @@
-name: Deploy to GitHub Pages
+name: build-and-deploy
+permissions:
+  contents: write
+  pages: write
 on:
   push:
     branches: [ main ]
@@ -6,13 +9,22 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - run: corepack enable
-      - uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: "22"
-      - run: pnpm install
-      - run: pnpm build --preset github_pages
-      - uses: actions/upload-pages-artifact@v3
+          node-version: 22
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
         with:
-          path: ./dist
+          version: 9
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+     # - name: Build docs
+        run: pnpm run docs:build
+     # - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: docs/.vitepress/dist
